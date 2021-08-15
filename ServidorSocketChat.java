@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.logging.Logger;
 import java.io.BufferedWriter;
 import java.net.ServerSocket;
@@ -10,9 +11,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 import java.util.logging.Level;
 
 public class ServidorSocketChat extends Thread {
@@ -21,7 +19,7 @@ public class ServidorSocketChat extends Thread {
     private final static String INICIANDO = "Chat iniciando...\n";
     private final static String DESCRICAO = "Projeto de POO - UFABC\n";
     private final static String AUTOR = "Elaborado por: William Crispim (RA: 11201722180)\n";
-    private final static String INFORMACOES = "Desenvolvedor fullstack Jr. na IBM (Node.js/Vue.js)\n";
+    private final static String INFORMACOES = "Desenvolvedor fullstack Jr. na IBM (Node.js/Vue.js)";
     private final static String SAIR = "Sair";
 
     private static ServerSocket servidor;
@@ -65,13 +63,19 @@ public class ServidorSocketChat extends Thread {
     }
 
     public void enviarMensagemUsuarios(BufferedWriter bufferedWriter, String mensagemDoCliente) throws IOException {
+        /*
+         * Para cada mensagem em buffer verificar se não é um mensagem vazia ou a mesma
+         * que ja foi enviada
+         */
+
         BufferedWriter bufferedWriterParaComparar;
 
-        for (BufferedWriter cliente : mensagemClienteBuffer) {
-            bufferedWriterParaComparar = (BufferedWriter) cliente;
+        for (BufferedWriter mensagemParaEnviar : mensagemClienteBuffer) {
+            bufferedWriterParaComparar = (BufferedWriter) mensagemParaEnviar;
+
             if (!(bufferedWriter == bufferedWriterParaComparar)) {
-                cliente.write(nomeDoCliente + ":      " + mensagemDoCliente + "\r\n");
-                cliente.flush();
+                mensagemParaEnviar.write(nomeDoCliente + ":      " + mensagemDoCliente + "\r\n");
+                mensagemParaEnviar.flush();
             }
         }
     }
@@ -80,18 +84,22 @@ public class ServidorSocketChat extends Thread {
         LOGGER.log(Level.INFO, "\n\n" + INICIANDO + DESCRICAO + AUTOR + INFORMACOES + "\n\n");
 
         try {
-            JTextField portaDoServidor = new JTextField();
-            Object[] informacoesDoServidor = { new JLabel("Em qual o servidor deve rodar?"), portaDoServidor };
-
-            // Mostra a janela para o usuario digitar a porta
-            JOptionPane.showMessageDialog(null, informacoesDoServidor);
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("Em qual porta o servidor deve rodar?\n");
+            int portaDoServidor = scanner.nextInt();
+            System.out.println("\n");
             // Cria o servidor na porta que o usuario escolheu
-            servidor = new ServerSocket(Integer.parseInt(portaDoServidor.getText()));
+            servidor = new ServerSocket(portaDoServidor);
+            // Armazena a mensagem do cliente em buffer
             mensagemClienteBuffer = new ArrayList<BufferedWriter>();
-            JOptionPane.showMessageDialog(null, "O servidor foi iniciado na porta: " + portaDoServidor.getText());
-            LOGGER.log(Level.INFO, "O servidor foi iniciado na porta: " + portaDoServidor.getText());
+            LOGGER.log(Level.INFO, "O servidor foi iniciado na porta: " + portaDoServidor);
+            scanner.close();
 
             while (true) {
+                /*
+                 * Aguarda a entrada de um novo usuário para criar uma nova thread
+                 */
+
                 LOGGER.log(Level.INFO, "Aguardando algum usuario conectar...");
                 Socket socket = servidor.accept();
                 LOGGER.log(Level.INFO, "Alguem entrou no servidor...");
